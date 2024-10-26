@@ -217,7 +217,7 @@ static void hkFullscreenActive(std::string args) {
     dispatch_toggleoverview("internalToggle");
   } else {
     hycov_log(LOG,"FullscreenActive set fullscreen");
-    g_pCompositor->setWindowFullscreenState(pWindow, {.internal =!pWindow->isFullscreen() ? FSMODE_MAXIMIZED: FSMODE_FULLSCREEN,.client = args == "1" ? FSMODE_MAXIMIZED: FSMODE_FULLSCREEN});
+    g_pCompositor->setWindowFullscreenState(pWindow, {.internal =!pWindow->isFullscreen() ? FSMODE_MAXIMIZED: FSMODE_NONE,.client = args == "1" ? FSMODE_MAXIMIZED: FSMODE_FULLSCREEN});
   }
 }
 

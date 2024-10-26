@@ -127,7 +127,7 @@ void OvGridLayout::onWindowCreatedTiling(PHLWINDOW pWindow, eDirection direction
 
     // clean fullscreen status
     if (pWindow->isFullscreen()) {
-        pWindow->m_sFullscreenState = {.internal = FSMODE_FULLSCREEN,.client = FSMODE_NONE};
+        pWindow->m_sFullscreenState = {.internal = FSMODE_NONE,.client = FSMODE_FULLSCREEN};
     }
 
     //clean floating status(only apply to old layout window)
@@ -184,7 +184,7 @@ void OvGridLayout::onWindowRemoved(PHLWINDOW pWindow) {
     }
 
     if (pWindow->isFullscreen())
-        g_pCompositor->setWindowFullscreenState(pWindow,{.internal = FSMODE_FULLSCREEN,.client = FSMODE_NONE});
+        g_pCompositor->setWindowFullscreenState(pWindow,{.internal = FSMODE_NONE,.client = FSMODE_FULLSCREEN});
 
     if (!pWindow->m_sGroupData.pNextWindow.expired()) {
         if (pWindow->m_sGroupData.pNextWindow.lock() == pWindow)

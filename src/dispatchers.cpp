@@ -379,10 +379,10 @@ void dispatch_enteroverview(std::string arg)
 		if (pWorkspace->m_bHasFullscreenWindow)
 		{
 			pFullscreenWindow = g_pCompositor->getFullscreenWindowOnWorkspace(pWorkspace->m_iID);
-			g_pCompositor->setWindowFullscreenState(pFullscreenWindow,{.internal = FSMODE_FULLSCREEN,.client = FSMODE_NONE});
+			g_pCompositor->setWindowFullscreenState(pFullscreenWindow,{.internal = FSMODE_NONE,.client = FSMODE_FULLSCREEN});
 
 			//let overview know the client is a fullscreen before
-            pFullscreenWindow->m_sFullscreenState = {.internal = FSMODE_FULLSCREEN,.client = FSMODE_NONE};
+            pFullscreenWindow->m_sFullscreenState = {.internal = FSMODE_NONE,.client = FSMODE_FULLSCREEN};
 		}
 	}
 
