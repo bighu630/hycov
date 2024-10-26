@@ -51,10 +51,10 @@ public:
   virtual void onWindowRemoved(PHLWINDOW );
   virtual bool isWindowTiled(PHLWINDOW );
   virtual PHLWINDOW getNextWindowCandidate(PHLWINDOW);
-  virtual void recalculateMonitor(const int &);
+  virtual void recalculateMonitor(const MONITORID &);
   virtual void recalculateWindow(PHLWINDOW );
   virtual void resizeActiveWindow(const Vector2D &, eRectCorner corner, PHLWINDOW pWindow = nullptr);
-  virtual void fullscreenRequestForWindow(PHLWINDOW , eFullscreenMode, bool);
+  virtual void fullscreenRequestForWindow(PHLWINDOW pWindow, const eFullscreenMode CURRENT_EFFECTIVE_MODE, const eFullscreenMode EFFECTIVE_MODE);
   virtual std::any layoutMessage(SLayoutMessageHeader, std::string);
   virtual SWindowRenderLayoutHints requestRenderHints(PHLWINDOW );
   virtual void switchWindows(PHLWINDOW , PHLWINDOW );
@@ -72,8 +72,8 @@ public:
   SOldLayoutRecordNodeData *getOldLayoutRecordNodeFromWindow(PHLWINDOW );
   void resizeNodeSizePos(SOvGridNodeData *, int, int, int, int);
   void moveWindowToWorkspaceSilent(PHLWINDOW , const int &);
-  std::list<SOvGridNodeData> m_lOvGridNodesData; 
-  std::list<SOldLayoutRecordNodeData> m_lSOldLayoutRecordNodeData; 
+  std::list<SOvGridNodeData> m_lOvGridNodesData;
+  std::list<SOldLayoutRecordNodeData> m_lSOldLayoutRecordNodeData;
   void moveWindowToSourceWorkspace();
   void changeToActivceSourceWorkspace();
   void removeOldLayoutData(PHLWINDOW pWindow);
