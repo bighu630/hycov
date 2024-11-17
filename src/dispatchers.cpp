@@ -112,7 +112,7 @@ PHLWINDOW direction_select(std::string arg){
 
 		auto *pMonitor = g_pCompositor->getMonitorFromID(pWindow->monitorID()).get();
 
-		if (!((isCrossMonitor(arg) && pWindow->m_pMonitor != pTempClient->m_pMonitor && !pTempClient->m_pWorkspace->m_bIsSpecialWorkspace && pWindow->m_pWorkspace == pMonitor->activeWorkspace ) || pTempClient->m_pWorkspace == pWindow->m_pWorkspace)) {
+		if (!((isCrossMonitor(arg) && pWindow->m_pMonitor->ID != pTempClient->m_pMonitor->ID && !pTempClient->m_pWorkspace->m_bIsSpecialWorkspace && pWindow->m_pWorkspace == pMonitor->activeWorkspace ) || pTempClient->m_pWorkspace == pWindow->m_pWorkspace)) {
 			continue;
 		}
 
@@ -547,7 +547,7 @@ void dispatch_leaveoverview(std::string arg)
 
 	//Preserve window focus
 	if(pActiveWindow){
-		if(g_hycov_forece_display_all_in_one_monitor && pActiveWindow->m_pMonitor != g_pCompositor->m_pLastMonitor->ID) {
+		if(g_hycov_forece_display_all_in_one_monitor && pActiveWindow->m_pMonitor->ID != g_pCompositor->m_pLastMonitor->ID) {
 			warpcursor_and_focus_to_window(pActiveWindow); //restore the focus to before active window.when cross monitor,warpcursor to monitor of current active window is in
 		} else {
 			g_pCompositor->focusWindow(pActiveWindow); //restore the focus to before active window

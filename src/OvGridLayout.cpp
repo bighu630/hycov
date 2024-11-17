@@ -106,7 +106,7 @@ void OvGridLayout::onWindowCreatedTiling(PHLWINDOW pWindow, eDirection direction
     pNode->workspaceName = pWindowOriWorkspace->m_szName;
 
     //record the window stats which are used by restore
-    pNode->ovbk_windowMonitorId = pWindow->m_pMonitor;
+    pNode->ovbk_windowMonitorId = pWindow->m_pMonitor->ID;
     pNode->ovbk_windowWorkspaceId = pWindow->m_pWorkspace->m_iID;
     pNode->ovbk_windowFullscreenMode  = pWindowOriWorkspace->m_efFullscreenMode;
     pNode->ovbk_position = pWindow->m_vRealPosition.goal();
@@ -122,7 +122,8 @@ void OvGridLayout::onWindowCreatedTiling(PHLWINDOW pWindow, eDirection direction
         pWindow->m_pWorkspace = pActiveWorkspace;
         pNode->workspaceID = pWindow->m_pWorkspace->m_iID;
         pNode->workspaceName = pActiveWorkspace->m_szName;
-        pNode->pWindow->m_pMonitor->ID = pTargetMonitor->ID;
+        pNode->pWindow->m_pMonitor = g_pCompositor->getMonitorFromID(pTargetMonitor->ID);
+
     }
 
     // clean fullscreen status
@@ -136,7 +137,7 @@ void OvGridLayout::onWindowCreatedTiling(PHLWINDOW pWindow, eDirection direction
         pWindow->updateDynamicRules();
     }
 
-    recalculateMonitor(pWindow->m_pMonitor);
+    recalculateMonitor(pWindow->m_pMonitor->ID);
 }
 
 
@@ -263,7 +264,7 @@ void OvGridLayout::onWindowRemovedTiling(PHLWINDOW pWindow)
         return;
     }
 
-    recalculateMonitor(pWindow->m_pMonitor);
+    recalculateMonitor(pWindow->m_pMonitor->ID);
 
 }
 
@@ -289,7 +290,7 @@ void OvGridLayout::calculateWorkspace(const int &ws)
     }
 
     NODECOUNT = getNodesNumOnWorkspace(pWorksapce->m_iID);
-    const auto pMonitor = g_pCompositor->getMonitorFromID(pWorksapce->m_pMonitor);
+    const auto pMonitor = g_pCompositor->getMonitorFromID(pWorksapce->m_pMonitor->ID);
 
     if (NODECOUNT == 0) {
         delete[] pTempNodes;
@@ -547,7 +548,7 @@ void OvGridLayout::onEnable()
         if (pWindow->isHidden() || !pWindow->m_bIsMapped || pWindow->m_bFadingOut)
             continue;
 
-        if(pWindow->m_pMonitor != g_pCompositor->m_pLastMonitor->ID && g_hycov_only_active_monitor && !g_hycov_forece_display_all && !g_hycov_forece_display_all_in_one_monitor)
+        if(pWindow->m_pMonitor->ID != g_pCompositor->m_pLastMonitor->ID && g_hycov_only_active_monitor && !g_hycov_forece_display_all && !g_hycov_forece_display_all_in_one_monitor)
             continue;
 
         const auto pNode = &m_lSOldLayoutRecordNodeData.emplace_back();
