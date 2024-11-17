@@ -81,7 +81,7 @@ void OvGridLayout::onWindowCreatedTiling(PHLWINDOW pWindow, eDirection direction
     if(g_hycov_forece_display_all_in_one_monitor) {
         pTargetMonitor = g_pCompositor->m_pLastMonitor.get();
     } else {
-      pTargetMonitor =  g_pCompositor->getMonitorFromID(pWindow->m_iMonitorID);
+      pTargetMonitor =  g_pCompositor->getMonitorFromID(pWindow->m_pMonitor->ID).get();
     }
 
     const auto pNode = &m_lOvGridNodesData.emplace_back(); // make a new node in list back
@@ -106,7 +106,7 @@ void OvGridLayout::onWindowCreatedTiling(PHLWINDOW pWindow, eDirection direction
     pNode->workspaceName = pWindowOriWorkspace->m_szName;
 
     //record the window stats which are used by restore
-    pNode->ovbk_windowMonitorId = pWindow->m_iMonitorID;
+    pNode->ovbk_windowMonitorId = pWindow->m_pMonitor;
     pNode->ovbk_windowWorkspaceId = pWindow->m_pWorkspace->m_iID;
     pNode->ovbk_windowFullscreenMode  = pWindowOriWorkspace->m_efFullscreenMode;
     pNode->ovbk_position = pWindow->m_vRealPosition.goal();
@@ -122,7 +122,7 @@ void OvGridLayout::onWindowCreatedTiling(PHLWINDOW pWindow, eDirection direction
         pWindow->m_pWorkspace = pActiveWorkspace;
         pNode->workspaceID = pWindow->m_pWorkspace->m_iID;
         pNode->workspaceName = pActiveWorkspace->m_szName;
-        pNode->pWindow->m_iMonitorID = pTargetMonitor->ID;
+        pNode->pWindow->m_pMonitor->ID = pTargetMonitor->ID;
     }
 
     // clean fullscreen status
@@ -136,7 +136,7 @@ void OvGridLayout::onWindowCreatedTiling(PHLWINDOW pWindow, eDirection direction
         pWindow->updateDynamicRules();
     }
 
-    recalculateMonitor(pWindow->m_iMonitorID);
+    recalculateMonitor(pWindow->m_pMonitor);
 }
 
 
@@ -263,7 +263,7 @@ void OvGridLayout::onWindowRemovedTiling(PHLWINDOW pWindow)
         return;
     }
 
-    recalculateMonitor(pWindow->m_iMonitorID);
+    recalculateMonitor(pWindow->m_pMonitor);
 
 }
 
@@ -289,7 +289,7 @@ void OvGridLayout::calculateWorkspace(const int &ws)
     }
 
     NODECOUNT = getNodesNumOnWorkspace(pWorksapce->m_iID);
-    const auto pMonitor = g_pCompositor->getMonitorFromID(pWorksapce->m_iMonitorID);
+    const auto pMonitor = g_pCompositor->getMonitorFromID(pWorksapce->m_pMonitor);
 
     if (NODECOUNT == 0) {
         delete[] pTempNodes;
@@ -524,9 +524,8 @@ void OvGridLayout::moveWindowToSourceWorkspace()
                 g_hycov_pSpawnHook->hook(); // disable on-emptty-create workspace rule
                 pWorkspace = g_pCompositor->createNewWorkspace(nd.ovbk_windowWorkspaceId,nd.ovbk_windowMonitorId,nd.ovbk_windowWorkspaceName);
                 g_hycov_pSpawnHook->unhook();
-                hycov_log(LOG,"create workspace: id:{} monitor:{} name:{}",nd.ovbk_windowWorkspaceId,nd.pWindow->m_iMonitorID,nd.ovbk_windowWorkspaceName);
             }
-            nd.pWindow->m_iMonitorID = nd.ovbk_windowMonitorId;
+            nd.pWindow->m_pMonitor->ID = nd.ovbk_windowMonitorId;
             nd.pWindow->m_pWorkspace = pWorkspace;
             nd.workspaceID = nd.ovbk_windowWorkspaceId;
             nd.workspaceName = nd.ovbk_windowWorkspaceName;
@@ -548,7 +547,7 @@ void OvGridLayout::onEnable()
         if (pWindow->isHidden() || !pWindow->m_bIsMapped || pWindow->m_bFadingOut)
             continue;
 
-        if(pWindow->m_iMonitorID != g_pCompositor->m_pLastMonitor->ID && g_hycov_only_active_monitor && !g_hycov_forece_display_all && !g_hycov_forece_display_all_in_one_monitor)
+        if(pWindow->m_pMonitor != g_pCompositor->m_pLastMonitor->ID && g_hycov_only_active_monitor && !g_hycov_forece_display_all && !g_hycov_forece_display_all_in_one_monitor)
             continue;
 
         const auto pNode = &m_lSOldLayoutRecordNodeData.emplace_back();
