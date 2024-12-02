@@ -3,8 +3,11 @@
 **for hyprland v 0.4.0**
 checkout to tag `v0.4.0`
 
-**for hyprland v0.4.5**
-just use the `main` branch
+**for hyprland v0.45.0**
+checkout to tag `v0.45.0`
+
+**for hyprland v0.45.2**
+in the `main` branch
 
 # hycov
 
