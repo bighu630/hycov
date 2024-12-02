@@ -1,5 +1,8 @@
 #include "dispatchers.hpp"
+#include <hyprland/src/Compositor.hpp>
+#include <hyprland/src/desktop/DesktopTypes.hpp>
 #include <hyprland/src/desktop/Workspace.hpp>
+#include <hyprland/src/managers/XWaylandManager.hpp>
 
 static const std::string overviewWorksapceName = "OVERVIEW";
 static std::string workspaceNameBackup;
@@ -314,6 +317,7 @@ void dispatch_toggleoverview(std::string arg)
 	}
 }
 
+
 void dispatch_enteroverview(std::string arg)
 {
 	if(g_hycov_isOverView) {
@@ -378,7 +382,7 @@ void dispatch_enteroverview(std::string arg)
 		CWorkspace *pWorkspace = w.get();
 		if (pWorkspace->m_bHasFullscreenWindow)
 		{
-			pFullscreenWindow = g_pCompositor->getFullscreenWindowOnWorkspace(pWorkspace->m_iID);
+			pFullscreenWindow = pWorkspace->getFullscreenWindow();
 			g_pCompositor->setWindowFullscreenState(pFullscreenWindow,{.internal = FSMODE_NONE,.client = FSMODE_FULLSCREEN});
 
 			//let overview know the client is a fullscreen before
@@ -396,7 +400,7 @@ void dispatch_enteroverview(std::string arg)
 	pActiveWorkspace = g_pCompositor->getWorkspaceByID(pActiveMonitor->activeWorkspace->m_iID);
 	workspaceNameBackup = pActiveWorkspace->m_szName;
 	workspaceIdBackup = pActiveWorkspace->m_iID;
-	g_pCompositor->renameWorkspace(pActiveMonitor->activeWorkspace->m_iID,overviewWorksapceName);
+    g_pCompositor->getWorkspaceByID(workspaceIdBackup)->rename(workspaceNameBackup);
 
 	//Preserve window focus
 	if(pActiveWindow){
@@ -453,7 +457,7 @@ void dispatch_leaveoverview(std::string arg)
 	g_hycov_isOverViewExiting = true;
 
 	//restore workspace name
-	g_pCompositor->renameWorkspace(workspaceIdBackup,workspaceNameBackup);
+    g_pCompositor->getWorkspaceByID(workspaceIdBackup)->rename(workspaceNameBackup);
 
 	//enable changeworkspace
 	if(g_hycov_disable_workspace_change) {
