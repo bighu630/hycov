@@ -70,7 +70,7 @@ inline CFunctionHook* g_hycov_pHyprMasterLayout_recalculateMonitorHook = nullptr
 inline CFunctionHook* g_hycov_pHyprDwindleLayout_recalculateWindowHook = nullptr;
 inline CFunctionHook* g_hycov_pSDwindleNodeData_recalcSizePosRecursiveHook = nullptr;
 inline CFunctionHook* g_hycov_pCInputManager_onMouseButtonHook = nullptr;
-inline CFunctionHook* g_hycov_pCKeybindManager_changeGroupActiveHook = nullptr;  
+inline CFunctionHook* g_hycov_pCKeybindManager_changeGroupActiveHook = nullptr;
 inline CFunctionHook* g_hycov_pCKeybindManager_toggleGroupHook = nullptr;
 inline CFunctionHook* g_hycov_pCKeybindManager_moveOutOfGroupHook = nullptr;
 inline CFunctionHook* g_hycov_pCInputManager_mouseMoveUnifiedHook = nullptr;
@@ -82,7 +82,7 @@ inline void errorNotif()
 		{
 			{"text", "Something has gone very wrong. Check the log for details."},
 			{"time", (uint64_t)10000},
-			{"color", CColor(1.0, 0.0, 0.0, 1.0)},
+			{"color", CHyprColor(1.0, 0.0, 0.0, 1.0)},
 			{"icon", ICON_ERROR},
 		});
 }
