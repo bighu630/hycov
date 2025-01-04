@@ -6,8 +6,10 @@ checkout to tag `v0.4.0`
 **for hyprland v0.45.0**
 checkout to tag `v0.45.0`
 
-**for hyprland v0.45.2**
+**for hyprland v0.45.2^**
 in the `main` branch
+
+no more than hyprland v0.46.1
 
 # hycov
 
