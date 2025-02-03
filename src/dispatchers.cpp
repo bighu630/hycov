@@ -1,4 +1,6 @@
 #include "dispatchers.hpp"
+#include "src/helpers/Monitor.hpp"
+#include "src/managers/LayoutManager.hpp"
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/DesktopTypes.hpp>
 #include <hyprland/src/desktop/Workspace.hpp>
@@ -17,14 +19,15 @@ void recalculateAllMonitor() {
 
 // only change layout,keep data of previous layout
 void switchToLayoutWithoutReleaseData(std::string layout) {
-    for (size_t i = 0; i < g_pLayoutManager->m_vLayouts.size(); ++i) {
-        if (g_pLayoutManager->m_vLayouts[i].first == layout) {
-            if (i == (size_t)g_pLayoutManager->m_iCurrentLayoutID)
-                return;
-            g_pLayoutManager->m_iCurrentLayoutID = i;
-            return;
-        }
-    }
+    // for (size_t i = 0; i < g_pLayoutManager->getAllLayoutNames().size(); ++i) {
+    //     if (g_pLayoutManager->getAllLayoutNames()[i] == layout) {
+    //         if (i == (size_t)g_pLayoutManager->getCurrentLayout()->getLayoutName())
+    //             return;
+    //         g_pLayoutManager->m_iCurrentLayoutID = i;
+    //         return;
+    //     }
+    // }
+    g_pLayoutManager->switchToLayout(layout);
     hycov_log(ERR, "Unknown layout!");
 }
 
@@ -127,8 +130,8 @@ PHLWINDOW direction_select(std::string arg){
 		delete[] pTempCWindows;
   		return nullptr;
 	}
-  	int sel_x = pTempClient->m_vRealPosition.goal().x;
-  	int sel_y = pTempClient->m_vRealPosition.goal().y;
+  	int sel_x = pTempClient->m_vRealPosition->goal().x;
+  	int sel_y = pTempClient->m_vRealPosition->goal().y;
   	long long int distance = LLONG_MAX;;
   	// int temp_focus = 0;
 
@@ -139,9 +142,9 @@ PHLWINDOW direction_select(std::string arg){
 		// Find the window with the closest coordinates
 		// in the top left corner of the window (is limited to same x)
   		for (int _i = 0; _i <= last; _i++) {
-  		  if (pTempCWindows[_i]->m_vRealPosition.goal().y < sel_y && pTempCWindows[_i]->m_vRealPosition.goal().x == sel_x) {
-  		    int dis_x = pTempCWindows[_i]->m_vRealPosition.goal().x - sel_x;
-  		    int dis_y = pTempCWindows[_i]->m_vRealPosition.goal().y - sel_y;
+  		  if (pTempCWindows[_i]->m_vRealPosition->goal().y < sel_y && pTempCWindows[_i]->m_vRealPosition->goal().x == sel_x) {
+  		    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
+  		    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
   		    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   		    if (tmp_distance < distance) {
   		      distance = tmp_distance;
@@ -153,9 +156,9 @@ PHLWINDOW direction_select(std::string arg){
 		// find again(is unlimited to x)
 		if(!pTempFocusCWindows){
   			for (int _i = 0; _i <= last; _i++) {
-  			  if (pTempCWindows[_i]->m_vRealPosition.goal().y < sel_y ) {
-  			    int dis_x = pTempCWindows[_i]->m_vRealPosition.goal().x - sel_x;
-  			    int dis_y = pTempCWindows[_i]->m_vRealPosition.goal().y - sel_y;
+  			  if (pTempCWindows[_i]->m_vRealPosition->goal().y < sel_y ) {
+  			    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
+  			    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
   			    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   			    if (tmp_distance < distance) {
   			      distance = tmp_distance;
@@ -167,9 +170,9 @@ PHLWINDOW direction_select(std::string arg){
   		break;
   	case ShiftDirection::Down:
   		for (int _i = 0; _i <= last; _i++) {
-  		  if (pTempCWindows[_i]->m_vRealPosition.goal().y > sel_y && pTempCWindows[_i]->m_vRealPosition.goal().x == sel_x) {
-  		    int dis_x = pTempCWindows[_i]->m_vRealPosition.goal().x - sel_x;
-  		    int dis_y = pTempCWindows[_i]->m_vRealPosition.goal().y - sel_y;
+  		  if (pTempCWindows[_i]->m_vRealPosition->goal().y > sel_y && pTempCWindows[_i]->m_vRealPosition->goal().x == sel_x) {
+  		    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
+  		    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
   		    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   		    if (tmp_distance < distance) {
   		      distance = tmp_distance;
@@ -179,9 +182,9 @@ PHLWINDOW direction_select(std::string arg){
   		}
 		if(!pTempFocusCWindows){
   			for (int _i = 0; _i <= last; _i++) {
-  			  if (pTempCWindows[_i]->m_vRealPosition.goal().y > sel_y ) {
-  			    int dis_x = pTempCWindows[_i]->m_vRealPosition.goal().x - sel_x;
-  			    int dis_y = pTempCWindows[_i]->m_vRealPosition.goal().y - sel_y;
+  			  if (pTempCWindows[_i]->m_vRealPosition->goal().y > sel_y ) {
+  			    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
+  			    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
   			    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   			    if (tmp_distance < distance) {
   			      distance = tmp_distance;
@@ -193,9 +196,9 @@ PHLWINDOW direction_select(std::string arg){
   		break;
   	case ShiftDirection::Left:
   		for (int _i = 0; _i <= last; _i++) {
-  		  if (pTempCWindows[_i]->m_vRealPosition.goal().x < sel_x && pTempCWindows[_i]->m_vRealPosition.goal().y == sel_y) {
-  		    int dis_x = pTempCWindows[_i]->m_vRealPosition.goal().x - sel_x;
-  		    int dis_y = pTempCWindows[_i]->m_vRealPosition.goal().y - sel_y;
+  		  if (pTempCWindows[_i]->m_vRealPosition->goal().x < sel_x && pTempCWindows[_i]->m_vRealPosition->goal().y == sel_y) {
+  		    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
+  		    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
   		    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   		    if (tmp_distance < distance) {
   		      distance = tmp_distance;
@@ -205,9 +208,9 @@ PHLWINDOW direction_select(std::string arg){
   		}
 		if(!pTempFocusCWindows){
   			for (int _i = 0; _i <= last; _i++) {
-  			  if (pTempCWindows[_i]->m_vRealPosition.goal().x < sel_x) {
-  			    int dis_x = pTempCWindows[_i]->m_vRealPosition.goal().x - sel_x;
-  			    int dis_y = pTempCWindows[_i]->m_vRealPosition.goal().y - sel_y;
+  			  if (pTempCWindows[_i]->m_vRealPosition->goal().x < sel_x) {
+  			    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
+  			    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
   			    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   			    if (tmp_distance < distance) {
   			      distance = tmp_distance;
@@ -219,21 +222,23 @@ PHLWINDOW direction_select(std::string arg){
   		break;
   	case ShiftDirection::Right:
   		for (int _i = 0; _i <= last; _i++) {
-  		  if (pTempCWindows[_i]->m_vRealPosition.goal().x > sel_x  && pTempCWindows[_i]->m_vRealPosition.goal().y == sel_y) {
-  		    int dis_x = pTempCWindows[_i]->m_vRealPosition.goal().x - sel_x;
-  		    int dis_y = pTempCWindows[_i]->m_vRealPosition.goal().y - sel_y;
+                  auto placeholder = pTempCWindows[_i]->m_vRealPosition;
+                  if (pTempCWindows[_i]->m_vRealPosition->goal().x > sel_x &&
+                      placeholder->goal().y == sel_y) {
+                    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
+  		    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
   		    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   		    if (tmp_distance < distance) {
   		      distance = tmp_distance;
   		      pTempFocusCWindows = pTempCWindows[_i];
   		    }
-  		  }
-  		}
+                  }
+                }
 		if(!pTempFocusCWindows){
   			for (int _i = 0; _i <= last; _i++) {
-  			  if (pTempCWindows[_i]->m_vRealPosition.goal().x > sel_x) {
-  			    int dis_x = pTempCWindows[_i]->m_vRealPosition.goal().x - sel_x;
-  			    int dis_y = pTempCWindows[_i]->m_vRealPosition.goal().y - sel_y;
+  			  if (pTempCWindows[_i]->m_vRealPosition->goal().x > sel_x) {
+  			    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
+  			    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
   			    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   			    if (tmp_distance < distance) {
   			      distance = tmp_distance;
@@ -504,21 +509,21 @@ void dispatch_leaveoverview(std::string arg)
 			g_pLayoutManager->getCurrentLayout()->onWindowCreatedFloating(n.pWindow);
 
 			// make floating client restore it's position and size
-			n.pWindow->m_vRealSize = n.ovbk_size;
-			n.pWindow->m_vRealPosition = n.ovbk_position;
+			n.pWindow->m_vRealSize->value() = n.ovbk_size;
+			n.pWindow->m_vRealPosition->value() = n.ovbk_position;
 
 			auto calcPos = n.ovbk_position;
 			auto calcSize = n.ovbk_size;
 
-			n.pWindow->m_vRealSize = calcSize;
-			n.pWindow->m_vRealPosition = calcPos;
+			n.pWindow->m_vRealSize->value() = calcSize;
+			n.pWindow->m_vRealPosition->value() = calcPos;
 
-			g_pXWaylandManager->setWindowSize(n.pWindow, calcSize);
+			// g_pXWaylandManager->setWindowSize(n.pWindow, calcSize);
 
 		} else if(!n.ovbk_windowIsFloating && !n.ovbk_windowIsFullscreen) {
 			// make nofloating client restore it's position and size
-			n.pWindow->m_vRealSize = n.ovbk_size;
-			n.pWindow->m_vRealPosition = n.ovbk_position;
+			n.pWindow->m_vRealSize->value() = n.ovbk_size;
+			n.pWindow->m_vRealPosition->value() = n.ovbk_position;
 
 			// auto calcPos = n.ovbk_position;
 			// auto calcSize = n.ovbk_size;
@@ -531,7 +536,7 @@ void dispatch_leaveoverview(std::string arg)
 				g_hycov_OvGridLayout->removeOldLayoutData(n.pWindow);
 				n.isInOldLayout = false;
 			} else {
-				g_pXWaylandManager->setWindowSize(n.pWindow, n.ovbk_size);
+				// g_pXWaylandManager->setWindowSize(n.pWindow, n.ovbk_size);
 			}
 
 			// restore active window in group

@@ -2,6 +2,8 @@
 
 #include <hyprland/src/layout/IHyprLayout.hpp>
 #include <hyprland/src/SharedDefs.hpp>
+#include <list>
+
 
 struct SOvGridNodeData
 {

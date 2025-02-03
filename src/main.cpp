@@ -2,6 +2,7 @@
 
 #include "dispatchers.hpp"
 #include "globaleventhook.hpp"
+#include "src/config/ConfigManager.hpp"
 
 APICALL EXPORT std::string PLUGIN_API_VERSION() { return HYPRLAND_API_VERSION; }
 
@@ -39,7 +40,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle)
 #undef CONF
 
 	HyprlandAPI::reloadConfig();
-	g_pConfigManager->tick();
+	g_pConfigManager->reload();
 
 	// int value
 	static const auto *pEnable_hotarea_config = (Hyprlang::INT* const*)(HyprlandAPI::getConfigValue(PHANDLE, "plugin:hycov:enable_hotarea")->getDataStaticPtr());

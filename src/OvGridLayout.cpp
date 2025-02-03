@@ -4,6 +4,10 @@
 #include "dispatchers.hpp"
 #include "src/SharedDefs.hpp"
 #include "src/desktop/Workspace.hpp"
+#include "src/helpers/Monitor.hpp"
+#include "src/managers/EventManager.hpp"
+#include "src/managers/LayoutManager.hpp"
+#include "src/render/Renderer.hpp"
 
 // find next focus window after remove a window
 PHLWINDOW OvGridLayout::getNextWindowCandidate(PHLWINDOW plastWindow) {
@@ -109,8 +113,8 @@ void OvGridLayout::onWindowCreatedTiling(PHLWINDOW pWindow, eDirection direction
     pNode->ovbk_windowMonitorId = pWindow->m_pMonitor->ID;
     pNode->ovbk_windowWorkspaceId = pWindow->m_pWorkspace->m_iID;
     pNode->ovbk_windowFullscreenMode  = pWindowOriWorkspace->m_efFullscreenMode;
-    pNode->ovbk_position = pWindow->m_vRealPosition.goal();
-    pNode->ovbk_size = pWindow->m_vRealSize.goal();
+    pNode->ovbk_position = pWindow->m_vRealPosition->goal();
+    pNode->ovbk_size = pWindow->m_vRealSize->goal();
     pNode->ovbk_windowIsFloating = pWindow->m_bIsFloating;
     pNode->ovbk_windowIsFullscreen = pWindow->isFullscreen();
     pNode->ovbk_windowWorkspaceName = pWindowOriWorkspace->m_szName;
@@ -207,8 +211,8 @@ void OvGridLayout::onWindowRemoved(PHLWINDOW pWindow) {
                 std::swap(PWINDOWPREV->m_sGroupData.pNextWindow.lock()->m_sGroupData.locked, pWindow->m_sGroupData.locked);
             }
 
-            if (pWindow == m_pLastTiledWindow.lock())
-                m_pLastTiledWindow.reset();
+            // if (pWindow == m_pLastTiledWindow.lock())
+            //     m_pLastTiledWindow.reset();
 
             pWindow->setHidden(false);
 
@@ -233,8 +237,8 @@ void OvGridLayout::onWindowRemoved(PHLWINDOW pWindow) {
         onWindowRemovedTiling(pWindow);
     }
 
-    if (pWindow == m_pLastTiledWindow.lock())
-        m_pLastTiledWindow.reset();
+    // if (pWindow == m_pLastTiledWindow.lock())
+    //     m_pLastTiledWindow.reset();
 }
 
 void OvGridLayout::onWindowRemovedTiling(PHLWINDOW pWindow)
@@ -430,9 +434,9 @@ void OvGridLayout::applyNodeDataToWindow(SOvGridNodeData *pNode)
     auto calcPos = pWindow->m_vPosition;
     auto calcSize = pWindow->m_vSize;
 
-    pWindow->m_vRealSize = calcSize;
-    pWindow->m_vRealPosition = calcPos;
-    g_pXWaylandManager->setWindowSize(pWindow, calcSize);
+    pWindow->m_vRealSize->value() = calcSize;
+    pWindow->m_vRealPosition->value() = calcPos;
+    // g_pXWaylandManager->setWindowSize(pWindow, calcSize);
 
     pWindow->updateWindowDecos();
 }
@@ -506,7 +510,7 @@ void OvGridLayout::changeToActivceSourceWorkspace()
     // pMonitor->changeWorkspace(pWorksapce);
     hycov_log(LOG,"changeToWorkspace:{}",pWorksapce->m_iID);
     g_pEventManager->postEvent(SHyprIPCEvent{"workspace", pWorksapce->m_szName});
-    EMIT_HOOK_EVENT("workspace", pWorksapce);
+    // EMIT_HOOK_EVENT("workspace", pWorksapce);
 }
 
 void OvGridLayout::moveWindowToSourceWorkspace()

@@ -6,6 +6,10 @@
 #include <hyprland/src/SharedDefs.hpp>
 #include "OvGridLayout.hpp"
 #include "src/desktop/Workspace.hpp"
+#include "src/helpers/Monitor.hpp"
+#include "src/layout/DwindleLayout.hpp"
+#include "src/layout/MasterLayout.hpp"
+#include "src/managers/input/InputManager.hpp"
 
 // std::unique_ptr<HOOK_CALLBACK_FN> mouseMoveHookPtr = std::make_unique<HOOK_CALLBACK_FN>(mouseMoveHook);
 // std::unique_ptr<HOOK_CALLBACK_FN> mouseButtonHookPtr = std::make_unique<HOOK_CALLBACK_FN>(mouseButtonHook);
@@ -300,7 +304,7 @@ void registerGlobalEventHook()
 
   // hook function of Swipe gesture event handle
   // hook function of Gridlayout Remove a node from tiled list
-  g_hycov_pCWindow_onUnmap = HyprlandAPI::createFunctionHook(PHANDLE, (void*)&CWindow::onUnmap, (void*)&hkCWindow_onUnmap);
+  g_hycov_pCWindow_onUnmap = HyprlandAPI::createFunctionHook(PHANDLE, (void *)&CWindow::onUnmap, (void*)&hkCWindow_onUnmap);
 
   // hook function of workspace change animation start
   g_hycov_pStartAnimHook = HyprlandAPI::createFunctionHook(PHANDLE, (void*)&CWorkspace::startAnim, (void*)&hkStartAnim);
@@ -328,7 +332,7 @@ void registerGlobalEventHook()
   //moveOutOfGroup
   g_hycov_pCKeybindManager_moveOutOfGroupHook = HyprlandAPI::createFunctionHook(PHANDLE, (void*)&CKeybindManager::moveOutOfGroup, (void*)&hkCKeybindManager_moveOutOfGroup);
   //mouse
-  g_hycov_pCInputManager_mouseMoveUnifiedHook = HyprlandAPI::createFunctionHook(PHANDLE, (void*)&CInputManager::mouseMoveUnified, (void*)&hkCInputManager_mouseMoveUnified);
+  // g_hycov_pCInputManager_mouseMoveUnifiedHook = HyprlandAPI::createFunctionHook(PHANDLE, (void*)&CInputManager::mouseMoveUnified, (void*)&hkCInputManager_mouseMoveUnified);
 
 
   //create private function hook
