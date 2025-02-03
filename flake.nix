@@ -33,7 +33,7 @@
         hycov = final: prev: {
           hyprlandPlugins = prev.hyprlandPlugins or {} // {
             hycov = final.callPackage ./default.nix {
-              stdenv = final.gcc13Stdenv;
+              stdenv = final.gcc14Stdenv;
             };
           };
         };
@@ -45,7 +45,7 @@
       });
 
       devShells = withPkgsFor (system: pkgs: {
-        default = pkgs.mkShell.override { stdenv = pkgs.gcc13Stdenv; } {
+        default = pkgs.mkShell.override { stdenv = pkgs.gcc14Stdenv; } {
           name = "hyprland-plugins";
           # buildInputs = [ pkgs.hyprland ];
           inputsFrom = [ pkgs.hycov ];
