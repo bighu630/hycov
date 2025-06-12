@@ -26,7 +26,7 @@ static double gesture_dy,gesture_previous_dy;
 std::string getKeynameFromKeycode(IKeyboard::SKeyEvent e, SP<IKeyboard> pKeyboard) {
   auto keyboard = pKeyboard.get();
   xkb_keycode_t keycode = e.keycode + 8;
-  xkb_keysym_t keysym = xkb_state_key_get_one_sym(keyboard->xkbState, keycode);
+  xkb_keysym_t keysym = xkb_state_key_get_one_sym(keyboard->m_xkbState, keycode);
   char *tmp_keyname = new char[64];
   xkb_keysym_get_name(keysym, tmp_keyname, 64);
   std::string keyname = tmp_keyname;
@@ -54,15 +54,15 @@ bool isKeyReleaseToggleExitOverviewHit(IKeyboard::SKeyEvent e, SP<IKeyboard> pKe
 
 static void toggle_hotarea(int x_root, int y_root)
 {
-  CMonitor *pMonitor = g_pCompositor->m_pLastMonitor.get();
+  CMonitor *pMonitor = g_pCompositor->m_lastMonitor.get();
 
-  if (g_hycov_hotarea_monitor != "all" && pMonitor->szName != g_hycov_hotarea_monitor)
+  if (g_hycov_hotarea_monitor != "all" && pMonitor->m_name!= g_hycov_hotarea_monitor)
     return;
 
-  auto m_x = pMonitor->vecPosition.x;
-  auto m_y = pMonitor->vecPosition.y;
-  auto m_width = pMonitor->vecSize.x;
-  auto m_height = pMonitor->vecSize.y;
+  auto m_x = pMonitor->m_position.x;
+  auto m_y = pMonitor->m_position.y;
+  auto m_width = pMonitor->m_position.x;
+  auto m_height = pMonitor->m_position.y;
 
   if (!g_hycov_isInHotArea &&
     ((g_hycov_hotarea_pos == 1 && x_root < (m_x + g_hycov_hotarea_size) && y_root > (m_y + m_height - g_hycov_hotarea_size)) ||
@@ -86,7 +86,7 @@ static void toggle_hotarea(int x_root, int y_root)
 
 static void hkCInputManager_mouseMoveUnified(void* thisptr, uint32_t time, bool refocus)
 {
-  (*(origCInputManager_mouseMoveUnified)g_hycov_pCInputManager_mouseMoveUnifiedHook->m_pOriginal)(thisptr, time, refocus);
+  (*(origCInputManager_mouseMoveUnified)g_hycov_pCInputManager_mouseMoveUnifiedHook->m_original)(thisptr, time, refocus);
 
   Vector2D   mouseCoords        = g_pInputManager->getMouseCoordsInternal();
   const auto MOUSECOORDSFLOORED = mouseCoords.floor();
@@ -102,7 +102,7 @@ static void hkCInputManager_onMouseButton(void* thisptr, IPointer::SButtonEvent 
         g_pInputManager->refocus();
     }
 
-    if (!g_pCompositor->m_pLastWindow.lock()) {
+    if (!g_pCompositor->m_lastWindow.lock()) {
       return;
     }
 
@@ -118,29 +118,29 @@ static void hkCInputManager_onMouseButton(void* thisptr, IPointer::SButtonEvent 
     case BTN_RIGHT:
       if (g_hycov_isOverView && e.state == WL_POINTER_BUTTON_STATE_PRESSED)
       {
-        g_pCompositor->closeWindow(g_pCompositor->m_pLastWindow.lock());
+        g_pCompositor->closeWindow(g_pCompositor->m_lastWindow.lock());
         return;
       }
       break;
     }
   } else {
-    (*(origCInputManager_onMouseButton)g_hycov_pCInputManager_onMouseButtonHook->m_pOriginal)(thisptr, e);
+    (*(origCInputManager_onMouseButton)g_hycov_pCInputManager_onMouseButtonHook->m_original)(thisptr, e);
   }
 }
 
 
 static void hkCWindow_onUnmap(void* thisptr) {
   // call the original function,Let it do what it should do
-  (*(origCWindow_onUnmap)g_hycov_pCWindow_onUnmap->m_pOriginal)(thisptr);
+  (*(origCWindow_onUnmap)g_hycov_pCWindow_onUnmap->m_original)(thisptr);
 
   // after done original thing,The workspace automatically exit overview if no client exists
   auto nodeNumInSameMonitor = 0;
   auto nodeNumInSameWorkspace = 0;
 	for (auto &n : g_hycov_OvGridLayout->m_lOvGridNodesData) {
-		if(n.pWindow->m_pMonitor->ID == g_pCompositor->m_pLastMonitor->ID && !g_pCompositor->isWorkspaceSpecial(n.workspaceID)) {
+		if(n.pWindow->monitorID() == g_pCompositor->m_lastMonitor->m_id && !g_pCompositor->isWorkspaceSpecial(n.workspaceID)) {
 			nodeNumInSameMonitor++;
 		}
-		if(n.pWindow->m_pWorkspace == g_pCompositor->m_pLastMonitor->activeWorkspace) {
+		if(n.pWindow->m_workspace == g_pCompositor->m_lastMonitor->m_activeWorkspace) {
 			nodeNumInSameWorkspace++;
 		}
 	}
@@ -177,17 +177,17 @@ static void hkSpawn(std::string args) {
 static void hkStartAnim(void* thisptr,bool in, bool left, bool instant = false) {
   // if is exiting overview, omit the animation of workspace change (instant = true)
   if (g_hycov_isOverViewExiting) {
-    (*(origStartAnim)g_hycov_pStartAnimHook->m_pOriginal)(thisptr, in, left, true);
+    (*(origStartAnim)g_hycov_pStartAnimHook->m_original)(thisptr, in, left, true);
     hycov_log(LOG,"hook startAnim,disable workspace change anim,in:{},isOverview:{}",in,g_hycov_isOverView);
   } else {
-    (*(origStartAnim)g_hycov_pStartAnimHook->m_pOriginal)(thisptr, in, left, instant);
+    (*(origStartAnim)g_hycov_pStartAnimHook->m_original)(thisptr, in, left, instant);
     // hycov_log(LOG,"hook startAnim,enable workspace change anim,in:{},isOverview:{}",in,g_hycov_isOverView);
   }
 }
 
 static void hkOnKeyboardKey(void* thisptr,std::any event, SP<IKeyboard> pKeyboard) {
 
-  (*(origOnKeyboardKey)g_hycov_pOnKeyboardKeyHook->m_pOriginal)(thisptr, event, pKeyboard);
+  (*(origOnKeyboardKey)g_hycov_pOnKeyboardKeyHook->m_original)(thisptr, event, pKeyboard);
 
   auto e = std::any_cast<IKeyboard::SKeyEvent>(event);
   // hycov_log(LOG,"alt key,keycode:{}",e.keycode);
@@ -204,13 +204,13 @@ static void hkFullscreenActive(std::string args) {
   // auto exit overview and fullscreen window when toggle fullscreen in overview mode
   hycov_log(LOG,"FullscreenActive hook toggle");
 
-  // (*(origFullscreenActive)g_hycov_pFullscreenActiveHook->m_pOriginal)(args);
-  const auto pWindow = g_pCompositor->m_pLastWindow.lock();
+  // (*(origFullscreenActive)g_hycov_pFullscreenActiveHook->m_original)(args);
+  const auto pWindow = g_pCompositor->m_lastWindow.lock();
 
   if (!pWindow)
         return;
 
-  if (pWindow->m_pWorkspace->m_bIsSpecialWorkspace)
+  if (pWindow->m_workspace->m_isSpecialWorkspace)
         return;
 
   if (g_hycov_isOverView && want_auto_fullscren(pWindow) && !g_hycov_auto_fullscreen) {
@@ -250,15 +250,15 @@ void hkCKeybindManager_moveOutOfGroup(std::string args) {
 }
 
 void hkCKeybindManager_changeGroupActive(std::string args) {
-    const auto PWINDOW = g_pCompositor->m_pLastWindow.lock();
+    const auto PWINDOW = g_pCompositor->m_lastWindow.lock();
     PHLWINDOW pTargetWindow;
     if (!PWINDOW)
         return;
 
-    if (!PWINDOW->m_sGroupData.pNextWindow.lock())
+    if (!PWINDOW->m_groupData.pNextWindow.lock())
         return;
 
-    if (PWINDOW->m_sGroupData.pNextWindow.lock() == PWINDOW)
+    if (PWINDOW->m_groupData.pNextWindow.lock() == PWINDOW)
         return;
 
     auto pNode =  g_hycov_OvGridLayout->getNodeFromWindow(PWINDOW);
@@ -266,7 +266,7 @@ void hkCKeybindManager_changeGroupActive(std::string args) {
       return;
 
     if (args != "b" && args != "prev") {
-        pTargetWindow = PWINDOW->m_sGroupData.pNextWindow.lock();
+        pTargetWindow = PWINDOW->m_groupData.pNextWindow.lock();
     } else {
         pTargetWindow = PWINDOW->getGroupPrevious();
     }
@@ -279,7 +279,7 @@ void hkCKeybindManager_changeGroupActive(std::string args) {
     }
 
     pNode->pWindow = pTargetWindow;
-    pNode->pWindow->m_pWorkspace = g_pCompositor->getWorkspaceByID(pNode->workspaceID);
+    pNode->pWindow->m_workspace = g_pCompositor->getWorkspaceByID(pNode->workspaceID);
 
     PWINDOW->setGroupCurrent(pTargetWindow);
     g_hycov_OvGridLayout->applyNodeDataToWindow(pNode);

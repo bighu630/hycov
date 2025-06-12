@@ -11,9 +11,9 @@ static std::string workspaceNameBackup;
 static int workspaceIdBackup;
 
 void recalculateAllMonitor() {
-	for (auto &m : g_pCompositor->m_vMonitors) {
+	for (auto &m : g_pCompositor->m_monitors) {
 		CMonitor *pMonitor = m.get();
-		g_pLayoutManager->getCurrentLayout()->recalculateMonitor(pMonitor->ID);
+		g_pLayoutManager->getCurrentLayout()->recalculateMonitor(pMonitor->m_id);
 	}
 }
 
@@ -89,8 +89,8 @@ std::optional<ShiftDirection> parseShiftArg(std::string arg) {
 }
 
 PHLWINDOW direction_select(std::string arg){
-	PHLWINDOW pTempClient =  g_pCompositor->m_pLastWindow.lock();
-	auto dataSize =  g_pCompositor->m_vWindows.size();
+	PHLWINDOW pTempClient =  g_pCompositor->m_lastWindow.lock();
+    auto dataSize = g_pCompositor->m_windows.size();
 	auto pTempCWindows = new PHLWINDOW[dataSize + 1];
 	PHLWINDOW pTempFocusCWindows = nullptr;
 	int last = -1;
@@ -108,17 +108,17 @@ PHLWINDOW direction_select(std::string arg){
         return nullptr;
     }
 
-    for (auto &w : g_pCompositor->m_vWindows)
+    for (auto &w : g_pCompositor->m_windows)
     {
 		PHLWINDOW pWindow = w;
 
-        if (pTempClient == pWindow || pWindow->isHidden() || !pWindow->m_bIsMapped || pWindow->m_bFadingOut || pWindow->isFullscreen()) {
+        if (pTempClient == pWindow || pWindow->isHidden() || !pWindow->m_isMapped || pWindow->m_fadingOut || pWindow->isFullscreen()) {
 			continue;
 		}
 
 		auto *pMonitor = g_pCompositor->getMonitorFromID(pWindow->monitorID()).get();
 
-		if (!((isCrossMonitor(arg) && pWindow->m_pMonitor->ID != pTempClient->m_pMonitor->ID && !pTempClient->m_pWorkspace->m_bIsSpecialWorkspace && pWindow->m_pWorkspace == pMonitor->activeWorkspace ) || pTempClient->m_pWorkspace == pWindow->m_pWorkspace)) {
+		if (!((isCrossMonitor(arg) && pWindow->m_monitor->m_id != pTempClient->m_monitor->m_id && !pTempClient->m_workspace->m_isSpecialWorkspace && pWindow->m_workspace == pMonitor->m_activeWorkspace) || pTempClient->m_workspace == pWindow->m_workspace)) {
 			continue;
 		}
 
@@ -130,8 +130,8 @@ PHLWINDOW direction_select(std::string arg){
 		delete[] pTempCWindows;
   		return nullptr;
 	}
-  	int sel_x = pTempClient->m_vRealPosition->goal().x;
-  	int sel_y = pTempClient->m_vRealPosition->goal().y;
+  	int sel_x = pTempClient->m_realPosition->goal().x;
+  	int sel_y = pTempClient->m_realPosition->goal().y;
   	long long int distance = LLONG_MAX;;
   	// int temp_focus = 0;
 
@@ -142,9 +142,9 @@ PHLWINDOW direction_select(std::string arg){
 		// Find the window with the closest coordinates
 		// in the top left corner of the window (is limited to same x)
   		for (int _i = 0; _i <= last; _i++) {
-  		  if (pTempCWindows[_i]->m_vRealPosition->goal().y < sel_y && pTempCWindows[_i]->m_vRealPosition->goal().x == sel_x) {
-  		    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
-  		    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
+  		  if (pTempCWindows[_i]->m_realPosition->goal().y < sel_y && pTempCWindows[_i]->m_realPosition->goal().x == sel_x) {
+  		    int dis_x = pTempCWindows[_i]->m_realPosition->goal().x - sel_x;
+  		    int dis_y = pTempCWindows[_i]->m_realPosition->goal().y - sel_y;
   		    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   		    if (tmp_distance < distance) {
   		      distance = tmp_distance;
@@ -156,9 +156,9 @@ PHLWINDOW direction_select(std::string arg){
 		// find again(is unlimited to x)
 		if(!pTempFocusCWindows){
   			for (int _i = 0; _i <= last; _i++) {
-  			  if (pTempCWindows[_i]->m_vRealPosition->goal().y < sel_y ) {
-  			    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
-  			    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
+  			  if (pTempCWindows[_i]->m_realPosition->goal().y < sel_y ) {
+  			    int dis_x = pTempCWindows[_i]->m_realPosition->goal().x - sel_x;
+  			    int dis_y = pTempCWindows[_i]->m_realPosition->goal().y - sel_y;
   			    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   			    if (tmp_distance < distance) {
   			      distance = tmp_distance;
@@ -170,9 +170,9 @@ PHLWINDOW direction_select(std::string arg){
   		break;
   	case ShiftDirection::Down:
   		for (int _i = 0; _i <= last; _i++) {
-  		  if (pTempCWindows[_i]->m_vRealPosition->goal().y > sel_y && pTempCWindows[_i]->m_vRealPosition->goal().x == sel_x) {
-  		    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
-  		    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
+  		  if (pTempCWindows[_i]->m_realPosition->goal().y > sel_y && pTempCWindows[_i]->m_realPosition->goal().x == sel_x) {
+  		    int dis_x = pTempCWindows[_i]->m_realPosition->goal().x - sel_x;
+  		    int dis_y = pTempCWindows[_i]->m_realPosition->goal().y - sel_y;
   		    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   		    if (tmp_distance < distance) {
   		      distance = tmp_distance;
@@ -182,9 +182,9 @@ PHLWINDOW direction_select(std::string arg){
   		}
 		if(!pTempFocusCWindows){
   			for (int _i = 0; _i <= last; _i++) {
-  			  if (pTempCWindows[_i]->m_vRealPosition->goal().y > sel_y ) {
-  			    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
-  			    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
+  			  if (pTempCWindows[_i]->m_realPosition->goal().y > sel_y ) {
+  			    int dis_x = pTempCWindows[_i]->m_realPosition->goal().x - sel_x;
+  			    int dis_y = pTempCWindows[_i]->m_realPosition->goal().y - sel_y;
   			    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   			    if (tmp_distance < distance) {
   			      distance = tmp_distance;
@@ -196,9 +196,9 @@ PHLWINDOW direction_select(std::string arg){
   		break;
   	case ShiftDirection::Left:
   		for (int _i = 0; _i <= last; _i++) {
-  		  if (pTempCWindows[_i]->m_vRealPosition->goal().x < sel_x && pTempCWindows[_i]->m_vRealPosition->goal().y == sel_y) {
-  		    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
-  		    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
+  		  if (pTempCWindows[_i]->m_realPosition->goal().x < sel_x && pTempCWindows[_i]->m_realPosition->goal().y == sel_y) {
+  		    int dis_x = pTempCWindows[_i]->m_realPosition->goal().x - sel_x;
+  		    int dis_y = pTempCWindows[_i]->m_realPosition->goal().y - sel_y;
   		    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   		    if (tmp_distance < distance) {
   		      distance = tmp_distance;
@@ -208,9 +208,9 @@ PHLWINDOW direction_select(std::string arg){
   		}
 		if(!pTempFocusCWindows){
   			for (int _i = 0; _i <= last; _i++) {
-  			  if (pTempCWindows[_i]->m_vRealPosition->goal().x < sel_x) {
-  			    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
-  			    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
+  			  if (pTempCWindows[_i]->m_realPosition->goal().x < sel_x) {
+  			    int dis_x = pTempCWindows[_i]->m_realPosition->goal().x - sel_x;
+  			    int dis_y = pTempCWindows[_i]->m_realPosition->goal().y - sel_y;
   			    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   			    if (tmp_distance < distance) {
   			      distance = tmp_distance;
@@ -222,11 +222,11 @@ PHLWINDOW direction_select(std::string arg){
   		break;
   	case ShiftDirection::Right:
   		for (int _i = 0; _i <= last; _i++) {
-                  auto placeholder = pTempCWindows[_i]->m_vRealPosition;
-                  if (pTempCWindows[_i]->m_vRealPosition->goal().x > sel_x &&
+                  auto placeholder = pTempCWindows[_i]->m_realPosition;
+                  if (pTempCWindows[_i]->m_realPosition->goal().x > sel_x &&
                       placeholder->goal().y == sel_y) {
-                    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
-  		    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
+                    int dis_x = pTempCWindows[_i]->m_realPosition->goal().x - sel_x;
+  		    int dis_y = pTempCWindows[_i]->m_realPosition->goal().y - sel_y;
   		    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   		    if (tmp_distance < distance) {
   		      distance = tmp_distance;
@@ -236,9 +236,9 @@ PHLWINDOW direction_select(std::string arg){
                 }
 		if(!pTempFocusCWindows){
   			for (int _i = 0; _i <= last; _i++) {
-  			  if (pTempCWindows[_i]->m_vRealPosition->goal().x > sel_x) {
-  			    int dis_x = pTempCWindows[_i]->m_vRealPosition->goal().x - sel_x;
-  			    int dis_y = pTempCWindows[_i]->m_vRealPosition->goal().y - sel_y;
+  			  if (pTempCWindows[_i]->m_realPosition->goal().x > sel_x) {
+  			    int dis_x = pTempCWindows[_i]->m_realPosition->goal().x - sel_x;
+  			    int dis_y = pTempCWindows[_i]->m_realPosition->goal().y - sel_y;
   			    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   			    if (tmp_distance < distance) {
   			      distance = tmp_distance;
@@ -255,15 +255,15 @@ PHLWINDOW direction_select(std::string arg){
 
 PHLWINDOW get_circle_next_window (std::string arg) {
 	bool next_ready = false;
-	PHLWINDOW pTempClient =  g_pCompositor->m_pLastWindow.lock();
+	PHLWINDOW pTempClient =  g_pCompositor->m_lastWindow.lock();
 
 	if(!pTempClient)
 		return nullptr;
 
-    for (auto &w : g_pCompositor->m_vWindows)
+    for (auto &w : g_pCompositor->m_windows)
     {
 		PHLWINDOW pWindow = w;
-        if (pTempClient->m_pWorkspace != pWindow->m_pWorkspace || pWindow->isHidden() || !pWindow->m_bIsMapped || pWindow->m_bFadingOut || pWindow->isFullscreen())
+        if (pTempClient->m_workspace != pWindow->m_workspace || pWindow->isHidden() || !pWindow->m_isMapped || pWindow->m_fadingOut || pWindow->isFullscreen())
             continue;
 		if (next_ready)
 			return 	pWindow;
@@ -271,10 +271,10 @@ PHLWINDOW get_circle_next_window (std::string arg) {
 			next_ready = true;
     }
 
-    for (auto &w : g_pCompositor->m_vWindows)
+    for (auto &w : g_pCompositor->m_windows)
     {
 		PHLWINDOW pWindow = w;
-        if (pTempClient->m_pWorkspace != pWindow->m_pWorkspace || pWindow->isHidden() || !pWindow->m_bIsMapped || pWindow->m_bFadingOut || pWindow->isFullscreen())
+        if (pTempClient->m_workspace != pWindow->m_workspace || pWindow->isHidden() || !pWindow->m_isMapped || pWindow->m_fadingOut || pWindow->isFullscreen())
             continue;
 		return pWindow;
     }
@@ -329,7 +329,7 @@ void dispatch_enteroverview(std::string arg)
 		return;
 	}
 
-	const auto pMonitor = g_pCompositor->m_pLastMonitor;
+	const auto pMonitor = g_pCompositor->m_lastMonitor;
 	if(pMonitor->activeSpecialWorkspaceID() != 0)
 		pMonitor->setSpecialWorkspace(nullptr);
 
@@ -359,16 +359,16 @@ void dispatch_enteroverview(std::string arg)
 
 	//ali clients exit fullscreen status before enter overview
 	PHLWINDOW pFullscreenWindow;
-	PHLWINDOW pActiveWindow = g_pCompositor->m_pLastWindow.lock();
+	PHLWINDOW pActiveWindow = g_pCompositor->m_lastWindow.lock();
 	PHLWORKSPACE pActiveWorkspace;
 	CMonitor *pActiveMonitor;
 
 	bool isNoShouldTileWindow = true;
 
-    for (auto &w : g_pCompositor->m_vWindows)
+    for (auto &w : g_pCompositor->m_windows)
     {
 		PHLWINDOW pWindow = w;
-        if (pWindow->isHidden() || !pWindow->m_bIsMapped || pWindow->m_bFadingOut || pWindow->m_pWorkspace->m_bIsSpecialWorkspace)
+        if (pWindow->isHidden() || !pWindow->m_isMapped || pWindow->m_fadingOut || pWindow->m_workspace->m_isSpecialWorkspace)
             continue;
 		isNoShouldTileWindow = false;
 	}
@@ -382,16 +382,16 @@ void dispatch_enteroverview(std::string arg)
 	g_hycov_isOverView = true;
 
 	//make all fullscreen window exit fullscreen state
-	for (auto &w : g_pCompositor->m_vWorkspaces)
+	for (auto &w : g_pCompositor->m_workspaces)
 	{
 		CWorkspace *pWorkspace = w.get();
-		if (pWorkspace->m_bHasFullscreenWindow)
+		if (pWorkspace->m_hasFullscreenWindow)
 		{
 			pFullscreenWindow = pWorkspace->getFullscreenWindow();
-			g_pCompositor->setWindowFullscreenState(pFullscreenWindow,{.internal = FSMODE_NONE,.client = FSMODE_FULLSCREEN});
+			g_pCompositor->setWindowFullscreenState(pFullscreenWindow, { .internal = FSMODE_NONE, .client = FSMODE_FULLSCREEN });
 
 			//let overview know the client is a fullscreen before
-            pFullscreenWindow->m_sFullscreenState = {.internal = FSMODE_NONE,.client = FSMODE_FULLSCREEN};
+            pFullscreenWindow->m_fullscreenState = { .internal = FSMODE_NONE, .client = FSMODE_FULLSCREEN };
 		}
 	}
 
@@ -401,21 +401,21 @@ void dispatch_enteroverview(std::string arg)
 	g_pLayoutManager->getCurrentLayout()->onEnable();
 
 	//change workspace name to OVERVIEW
-	pActiveMonitor	= g_pCompositor->m_pLastMonitor.get();
-	pActiveWorkspace = g_pCompositor->getWorkspaceByID(pActiveMonitor->activeWorkspace->m_iID);
-	workspaceNameBackup = pActiveWorkspace->m_szName;
-	workspaceIdBackup = pActiveWorkspace->m_iID;
-    g_pCompositor->getWorkspaceByID(workspaceIdBackup)->rename(workspaceNameBackup);
+	pActiveMonitor	= g_pCompositor->m_lastMonitor.get();
+	pActiveWorkspace = g_pCompositor->getWorkspaceByID(pActiveMonitor->m_activeWorkspace->m_id);
+	workspaceNameBackup = pActiveWorkspace->m_name;
+	workspaceIdBackup = pActiveWorkspace->m_id;
+    g_pCompositor->getWorkspaceByID(workspaceIdBackup)->m_name = std::move(overviewWorksapceName);
 
 	//Preserve window focus
 	if(pActiveWindow){
 		g_pCompositor->focusWindow(pActiveWindow); //restore the focus to before active window
 
 	} else { // when no window is showed in current window,find from other workspace to focus(exclude special workspace)
-    	for (auto &w : g_pCompositor->m_vWindows) {
+    	for (auto &w : g_pCompositor->m_windows) {
 			PHLWINDOW pWindow = w;
 			auto node = g_hycov_OvGridLayout->getNodeFromWindow(pWindow);
-    	    if ( !node || g_pCompositor->isWorkspaceSpecial(node->workspaceID) || pWindow->isHidden() || !pWindow->m_bIsMapped || pWindow->m_bFadingOut || pWindow->isFullscreen())
+    	    if ( !node || g_pCompositor->isWorkspaceSpecial(node->workspaceID) || pWindow->isHidden() || !pWindow->m_isMapped || pWindow->m_fadingOut || pWindow->isFullscreen())
     	        continue;
 			g_pCompositor->focusWindow(pWindow); // find the last window that is in same workspace with the remove window
     	}
@@ -449,7 +449,7 @@ void dispatch_leaveoverview(std::string arg)
 		return;
 	}
 
-	const auto pMonitor = g_pCompositor->m_pLastMonitor;
+	const auto pMonitor = g_pCompositor->m_lastMonitor;
 	if(pMonitor->activeSpecialWorkspaceID() != 0)
 		pMonitor->setSpecialWorkspace(nullptr);
 
@@ -462,7 +462,7 @@ void dispatch_leaveoverview(std::string arg)
 	g_hycov_isOverViewExiting = true;
 
 	//restore workspace name
-    g_pCompositor->getWorkspaceByID(workspaceIdBackup)->rename(workspaceNameBackup);
+    g_pCompositor->getWorkspaceByID(workspaceIdBackup)->m_name = std::move(workspaceNameBackup);
 
 	//enable changeworkspace
 	if(g_hycov_disable_workspace_change) {
@@ -505,25 +505,25 @@ void dispatch_leaveoverview(std::string arg)
 		if (n.ovbk_windowIsFloating)
 		{
 			//make floating client restore it's floating status
-			n.pWindow->m_bIsFloating = true;
+			n.pWindow->m_isFloating = true;
 			g_pLayoutManager->getCurrentLayout()->onWindowCreatedFloating(n.pWindow);
 
 			// make floating client restore it's position and size
-			n.pWindow->m_vRealSize->value() = n.ovbk_size;
-			n.pWindow->m_vRealPosition->value() = n.ovbk_position;
+			n.pWindow->m_realSize->value() = n.ovbk_size;
+			n.pWindow->m_realPosition->value() = n.ovbk_position;
 
 			auto calcPos = n.ovbk_position;
 			auto calcSize = n.ovbk_size;
 
-			n.pWindow->m_vRealSize->value() = calcSize;
-			n.pWindow->m_vRealPosition->value() = calcPos;
+			n.pWindow->m_realSize->value() = calcSize;
+			n.pWindow->m_realPosition->value() = calcPos;
 
 			// g_pXWaylandManager->setWindowSize(n.pWindow, calcSize);
 
 		} else if(!n.ovbk_windowIsFloating && !n.ovbk_windowIsFullscreen) {
 			// make nofloating client restore it's position and size
-			n.pWindow->m_vRealSize->value() = n.ovbk_size;
-			n.pWindow->m_vRealPosition->value() = n.ovbk_position;
+			n.pWindow->m_realSize->value() = n.ovbk_size;
+			n.pWindow->m_realPosition->value() = n.ovbk_position;
 
 			// auto calcPos = n.ovbk_position;
 			// auto calcSize = n.ovbk_size;
@@ -547,7 +547,7 @@ void dispatch_leaveoverview(std::string arg)
 	}
 
 	//exit overview layout,go back to old layout
-	PHLWINDOW pActiveWindow = g_pCompositor->m_pLastWindow.lock();
+	PHLWINDOW pActiveWindow = g_pCompositor->m_lastWindow.lock();
 	g_pCompositor->focusWindow(nullptr);
 	// g_pLayoutManager->switchToLayout(*configLayoutName);
 	// g_pLayoutManager->getCurrentLayout()->onDisable();
@@ -556,16 +556,16 @@ void dispatch_leaveoverview(std::string arg)
 
 	//Preserve window focus
 	if(pActiveWindow){
-		if(g_hycov_forece_display_all_in_one_monitor && pActiveWindow->m_pMonitor->ID != g_pCompositor->m_pLastMonitor->ID) {
+		if(g_hycov_forece_display_all_in_one_monitor && pActiveWindow->monitorID() != g_pCompositor->m_lastMonitor->m_id) {
 			warpcursor_and_focus_to_window(pActiveWindow); //restore the focus to before active window.when cross monitor,warpcursor to monitor of current active window is in
 		} else {
 			g_pCompositor->focusWindow(pActiveWindow); //restore the focus to before active window
 		}
 
-		if(pActiveWindow->m_bIsFloating && g_hycov_raise_float_to_top) {
+		if(pActiveWindow->m_isFloating && g_hycov_raise_float_to_top) {
 			g_pCompositor->changeWindowZOrder(pActiveWindow, true);
 		} else if(g_hycov_auto_fullscreen && want_auto_fullscren(pActiveWindow)) { // if enale auto_fullscreen after exit overview
-			g_pCompositor->setWindowFullscreenState(pActiveWindow,{.internal = FSMODE_NONE, .client = FSMODE_MAXIMIZED});
+			g_pCompositor->setWindowFullscreenState(pActiveWindow, { .internal = FSMODE_NONE, .client = FSMODE_MAXIMIZED });
 		}
 	}
 
@@ -574,15 +574,15 @@ void dispatch_leaveoverview(std::string arg)
 		//make all fullscrenn windwo restore it's status
 		if (n.ovbk_windowIsFullscreen)
 		{
-			if (!g_pCompositor->m_pLastWindow.lock()) {
+			if (!g_pCompositor->m_lastWindow.lock()) {
 				continue;
 			}
 
-			if (n.pWindow != g_pCompositor->m_pLastWindow.lock() && n.pWindow->m_pWorkspace == g_pCompositor->m_pLastWindow.lock()->m_pWorkspace)
+			if (n.pWindow != g_pCompositor->m_lastWindow.lock() && n.pWindow->m_workspace == g_pCompositor->m_lastWindow.lock()->m_workspace)
 			{
 				continue;
 			}
-			g_pCompositor->setWindowFullscreenState(pActiveWindow,{.internal = FSMODE_NONE, .client = FSMODE_MAXIMIZED});
+			g_pCompositor->setWindowFullscreenState(pActiveWindow, { .internal = FSMODE_NONE, .client = FSMODE_MAXIMIZED });
 		}
 	}
 
@@ -591,7 +591,7 @@ void dispatch_leaveoverview(std::string arg)
 		// if client not in old layout,create tiling of the client
 		if(!n.isInOldLayout)
 		{
-			if (n.pWindow->m_bFadingOut || !n.pWindow->m_bIsMapped || n.pWindow->isHidden()) {
+			if (n.pWindow->m_fadingOut || !n.pWindow->m_isMapped || n.pWindow->isHidden()) {
 				continue;
 			}
 			hycov_log(LOG,"create tiling window in old layout,window:{},workspace:{},inoldlayout:{}",n.pWindow,n.workspaceID,n.isInOldLayout);
