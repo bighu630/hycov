@@ -401,7 +401,12 @@ void OvGridLayout::recalculateMonitor(const MONITORID &monid)
 
     if(!pMonitor || !pMonitor->m_activeWorkspace)
         return;
-
+    // if (pMonitor->m_size.x <= 0 || pMonitor->m_size.y <= 0) {
+    //     Debug::log(ERR, "Invalid monitor size: width={}, height={}",
+    //             pMonitor->m_size.x, pMonitor->m_size.y);
+    //     return;
+    // }
+    // return;
     g_pHyprRenderer->damageMonitor(pMonitor); // Use local rendering
 
     if (pMonitor->activeSpecialWorkspaceID()) {

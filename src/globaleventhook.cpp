@@ -355,7 +355,7 @@ void registerGlobalEventHook()
 
   //register pEvent hook
   if(g_hycov_enable_hotarea){
-    g_hycov_pCInputManager_mouseMoveUnifiedHook->hook();
+    // g_hycov_pCInputManager_mouseMoveUnifiedHook->hook();
     // static auto mouseMoveHook = HyprlandAPI::registerCallbackDynamic(PHANDLE, "mouseMove",[&](void* self, SCallbackInfo& info, std::any data) { hkmouseMove(self, info, data); });
   }
 
