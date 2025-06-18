@@ -398,7 +398,7 @@ void dispatch_enteroverview(std::string arg)
 	//enter overview layout
 	// g_pLayoutManager->switchToLayout("ovgrid");
 	switchToLayoutWithoutReleaseData("ovgrid");
-	g_pLayoutManager->getCurrentLayout()->onEnable();
+	//g_pLayoutManager->getCurrentLayout()->onEnable();
 
 	//change workspace name to OVERVIEW
 	pActiveMonitor	= g_pCompositor->m_lastMonitor.get();
