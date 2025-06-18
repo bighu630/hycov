@@ -358,13 +358,13 @@ void OvGridLayout::calculateWorkspace(const int &ws) {
 
   // two client arrange
   if (NODECOUNT == 2) {
-    pNode = pTempNodes[0];
+    pNode = pTempNodes[1];
     cw = (w_width - 2 * (*GAPPO) - (*GAPPI)) / 2;
     ch = (w_height - 2 * (*GAPPO)) * 0.65;
     resizeNodeSizePos(pNode, m_x + cw + (*GAPPO) + (*GAPPI),
                       m_y + (m_height - ch) / 2 + (*GAPPO),
                       cw - 2 * (*PBORDERSIZE), ch - 2 * (*PBORDERSIZE));
-    resizeNodeSizePos(pTempNodes[1], m_x + (*GAPPO),
+    resizeNodeSizePos(pTempNodes[0], m_x + (*GAPPO),
                       m_y + (m_height - ch) / 2 + (*GAPPO),
                       cw - 2 * (*PBORDERSIZE), ch - 2 * (*PBORDERSIZE));
     delete[] pTempNodes;
