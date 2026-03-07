@@ -168,11 +168,18 @@ void OvGridLayout::moveWindowToSourceWorkspace() {
       pWorkspace = g_pCompositor->getWorkspaceByID(nd.ovbk_windowWorkspaceId);
       if (!pWorkspace) {
         hycov_log(HYCOV_LOG, "source workspace no exist");
+        // Validate the original monitor still exists; fall back to active monitor
+        auto pOrigMonitor = g_pCompositor->getMonitorFromID(nd.ovbk_windowMonitorId);
+        MONITORID monitorId = pOrigMonitor ? nd.ovbk_windowMonitorId
+                                           : Desktop::focusState()->monitor()->m_id;
         g_hycov_pSpawnHook->hook(); // disable on-empty-create workspace rule
         pWorkspace = g_pCompositor->createNewWorkspace(
-            nd.ovbk_windowWorkspaceId, nd.ovbk_windowMonitorId,
-            nd.ovbk_windowWorkspaceName);
+            nd.ovbk_windowWorkspaceId, monitorId, nd.ovbk_windowWorkspaceName);
         g_hycov_pSpawnHook->unhook();
+        if (!pWorkspace) {
+          hycov_log(HYCOV_LOG, "failed to create workspace, skipping window");
+          continue;
+        }
       }
       // Move window back to its source workspace
       g_pCompositor->moveWindowToWorkspaceSafe(nd.pWindow, pWorkspace);
