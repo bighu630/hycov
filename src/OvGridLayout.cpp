@@ -197,6 +197,11 @@ void OvGridLayout::moveWindowToSourceWorkspace() {
       }
       // Move window back to its source workspace
       g_pCompositor->moveWindowToWorkspaceSafe(nd.pWindow, pWorkspace);
+      // Restore monitor if it was changed during overview
+      auto pOrigMonitor = g_pCompositor->getMonitorFromID(nd.ovbk_windowMonitorId);
+      if (pOrigMonitor && nd.pWindow->monitorID() != nd.ovbk_windowMonitorId) {
+        nd.pWindow->m_monitor = pOrigMonitor;
+      }
       nd.workspaceID = nd.ovbk_windowWorkspaceId;
       nd.workspaceName = nd.ovbk_windowWorkspaceName;
       nd.pWindow->m_position = nd.ovbk_position;

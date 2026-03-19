@@ -205,18 +205,16 @@ PHLWINDOW direction_select(std::string arg){
   		break;
   	case ShiftDirection::Right:
   		for (int _i = 0; _i <= last; _i++) {
-                  auto& placeholder = pTempCWindows[_i]->m_realPosition;
-                  if (pTempCWindows[_i]->m_position.x > sel_x &&
-                      placeholder->goal().y == sel_y) {
-                    int dis_x = pTempCWindows[_i]->m_position.x - sel_x;
+  		  if (pTempCWindows[_i]->m_position.x > sel_x && pTempCWindows[_i]->m_position.y == sel_y) {
+  		    int dis_x = pTempCWindows[_i]->m_position.x - sel_x;
   		    int dis_y = pTempCWindows[_i]->m_position.y - sel_y;
   		    long long int tmp_distance = dis_x * dis_x + dis_y * dis_y;
   		    if (tmp_distance < distance) {
   		      distance = tmp_distance;
   		      pTempFocusCWindows = pTempCWindows[_i];
   		    }
-                  }
-                }
+  		  }
+  		}
 		if(!pTempFocusCWindows){
   			for (int _i = 0; _i <= last; _i++) {
   			  if (pTempCWindows[_i]->m_position.x > sel_x) {
@@ -457,7 +455,9 @@ void dispatch_enteroverview(std::string arg)
 			// Use direct assignment to avoid triggering dwindle/master layout
 			// callbacks that would reposition windows after calculateWorkspace
 			pWindow->m_workspace = pActiveWorkspace;
-			if (g_hycov_forece_display_all_in_one_monitor) {
+			// Always update the monitor when moving cross-monitor windows,
+			// otherwise windows render on the wrong monitor in overview
+			if (pWindow->monitorID() != pActiveMonitor->m_id) {
 				pWindow->m_monitor = g_pCompositor->getMonitorFromID(pActiveMonitor->m_id);
 			}
 			pNode->workspaceID = pWindow->workspaceID();
@@ -483,16 +483,17 @@ void dispatch_enteroverview(std::string arg)
 	// Recalculate grid layout for the active workspace
 	g_hycov_OvGridLayout->calculateWorkspace(pActiveWorkspace->m_id);
 
-	//Preserve window focus
+	//Preserve window focus and warp cursor to focused window's grid position
 	if(pActiveWindow){
-		Desktop::focusState()->fullWindowFocus(pActiveWindow, Desktop::FOCUS_REASON_OTHER);
+		warpcursor_and_focus_to_window(pActiveWindow);
 	} else {
     	for (auto &w : g_pCompositor->m_windows) {
 			PHLWINDOW pWindow = w;
 			auto node = g_hycov_OvGridLayout->getNodeFromWindow(pWindow);
     	    if ( !node || g_pCompositor->isWorkspaceSpecial(node->workspaceID) || pWindow->isHidden() || !pWindow->m_isMapped || pWindow->m_fadingOut || pWindow->isFullscreen())
     	        continue;
-			Desktop::focusState()->fullWindowFocus(pWindow, Desktop::FOCUS_REASON_OTHER);
+			warpcursor_and_focus_to_window(pWindow);
+			break;
     	}
 	}
 
@@ -618,7 +619,7 @@ void dispatch_leaveoverview(std::string arg)
 			{
 				continue;
 			}
-			g_pCompositor->setWindowFullscreenState(pActiveWindow, { .internal = FSMODE_NONE, .client = FSMODE_MAXIMIZED });
+			g_pCompositor->setWindowFullscreenState(n.pWindow, { .internal = FSMODE_NONE, .client = FSMODE_MAXIMIZED });
 		}
 	}
 
