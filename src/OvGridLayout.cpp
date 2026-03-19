@@ -180,6 +180,20 @@ void OvGridLayout::moveWindowToSourceWorkspace() {
           hycov_log(HYCOV_LOG, "failed to create workspace, skipping window");
           continue;
         }
+        // The source workspace was destroyed while in overview, which also destroyed
+        // its layout space. The window's ITarget::currentSpace is now a dangling
+        // pointer, so calling moveWindowToWorkspaceSafe would crash in the layout's
+        // removeTarget. Use direct assignment instead (matching how enteroverview
+        // moved the window in), then let recalculateAllMonitor() rebuild layouts.
+        nd.pWindow->m_workspace = pWorkspace;
+        if (pOrigMonitor)
+          nd.pWindow->m_monitor = pOrigMonitor;
+        nd.workspaceID = nd.ovbk_windowWorkspaceId;
+        nd.workspaceName = nd.ovbk_windowWorkspaceName;
+        nd.pWindow->m_position = nd.ovbk_position;
+        nd.pWindow->m_size = nd.ovbk_size;
+        g_pHyprRenderer->damageWindow(nd.pWindow);
+        continue;
       }
       // Move window back to its source workspace
       g_pCompositor->moveWindowToWorkspaceSafe(nd.pWindow, pWorkspace);
