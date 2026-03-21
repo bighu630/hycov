@@ -641,25 +641,6 @@ void dispatch_leaveoverview(std::string arg)
 	//mark has exited overview mode (after recalculation is complete)
 	g_hycov_isOverViewExiting = false;
 
-	// Force all windows to update their internal data so Hyprland
-	// re-evaluates decorations, borders, and focus-related state
-	for (auto &w : g_pCompositor->m_windows) {
-		PHLWINDOW pW = w;
-		if (!pW->m_isMapped || pW->isHidden() || pW->m_fadingOut)
-			continue;
-		pW->updateWindowData();
-	}
-
-	// Re-focus the active window after layout recalculation to force
-	// Hyprland to fully refresh its focus state (keyboard focus, border
-	// highlights, etc.) — this mimics what a workspace switch does
-	PHLWINDOW pFocusedAfterRecalc = Desktop::focusState()->window();
-	if (pFocusedAfterRecalc) {
-		Desktop::focusState()->fullWindowFocus(nullptr, Desktop::FOCUS_REASON_OTHER);
-		Desktop::focusState()->fullWindowFocus(pFocusedAfterRecalc, Desktop::FOCUS_REASON_OTHER);
-		g_pCompositor->warpCursorTo(pFocusedAfterRecalc->middle());
-	}
-
 	// disable hook fullscreenActive function
   	g_hycov_pFullscreenActiveHook->unhook();
 
