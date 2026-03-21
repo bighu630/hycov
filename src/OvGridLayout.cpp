@@ -8,6 +8,7 @@
 #include "src/managers/EventManager.hpp"
 #include "src/render/Renderer.hpp"
 #include <cmath>
+#include <set>
 
 SOvGridNodeData *OvGridLayout::getNodeFromWindow(PHLWINDOW pWindow) {
   for (auto &nd : m_lOvGridNodesData) {
@@ -136,6 +137,8 @@ void OvGridLayout::applyNodeDataToWindow(SOvGridNodeData *pNode) {
   pWindow->m_realPosition->setValueAndWarp(calcPos);
 
   pWindow->updateWindowDecos();
+
+  g_pHyprRenderer->damageWindow(pWindow);
 }
 
 void OvGridLayout::changeToActivceSourceWorkspace() {
@@ -161,52 +164,67 @@ void OvGridLayout::moveWindowToSourceWorkspace() {
 
   hycov_log(HYCOV_LOG, "moveWindowToSourceWorkspace");
 
+  // First pass: recreate any destroyed workspaces so they exist before we
+  // try to move windows back.  Collect IDs of recreated workspaces so the
+  // second pass knows to use direct assignment (their layout spaces are new
+  // and windows still hold dangling currentSpace pointers from the old ones).
+  std::set<WORKSPACEID> recreatedWorkspaces;
   for (auto &nd : m_lOvGridNodesData) {
-    if (nd.pWindow && nd.pWindow->m_workspace &&
-        (nd.pWindow->m_workspace->m_id != nd.ovbk_windowWorkspaceId ||
-         nd.workspaceName != nd.ovbk_windowWorkspaceName)) {
-      pWorkspace = g_pCompositor->getWorkspaceByID(nd.ovbk_windowWorkspaceId);
-      if (!pWorkspace) {
-        hycov_log(HYCOV_LOG, "source workspace no exist");
-        // Validate the original monitor still exists; fall back to active monitor
-        auto pOrigMonitor = g_pCompositor->getMonitorFromID(nd.ovbk_windowMonitorId);
-        MONITORID monitorId = pOrigMonitor ? nd.ovbk_windowMonitorId
-                                           : Desktop::focusState()->monitor()->m_id;
-        g_hycov_pSpawnHook->hook(); // disable on-empty-create workspace rule
-        pWorkspace = g_pCompositor->createNewWorkspace(
-            nd.ovbk_windowWorkspaceId, monitorId, nd.ovbk_windowWorkspaceName);
-        g_hycov_pSpawnHook->unhook();
-        if (!pWorkspace) {
-          hycov_log(HYCOV_LOG, "failed to create workspace, skipping window");
-          continue;
-        }
-        // The source workspace was destroyed while in overview, which also destroyed
-        // its layout space. The window's ITarget::currentSpace is now a dangling
-        // pointer, so calling moveWindowToWorkspaceSafe would crash in the layout's
-        // removeTarget. Use direct assignment instead (matching how enteroverview
-        // moved the window in), then let recalculateAllMonitor() rebuild layouts.
-        nd.pWindow->m_workspace = pWorkspace;
-        if (pOrigMonitor)
-          nd.pWindow->m_monitor = pOrigMonitor;
-        nd.workspaceID = nd.ovbk_windowWorkspaceId;
-        nd.workspaceName = nd.ovbk_windowWorkspaceName;
-        nd.pWindow->m_position = nd.ovbk_position;
-        nd.pWindow->m_size = nd.ovbk_size;
-        g_pHyprRenderer->damageWindow(nd.pWindow);
-        continue;
-      }
-      // Move window back to its source workspace
-      g_pCompositor->moveWindowToWorkspaceSafe(nd.pWindow, pWorkspace);
-      // Restore monitor if it was changed during overview
-      auto pOrigMonitor = g_pCompositor->getMonitorFromID(nd.ovbk_windowMonitorId);
-      if (pOrigMonitor && nd.pWindow->monitorID() != nd.ovbk_windowMonitorId) {
-        nd.pWindow->m_monitor = pOrigMonitor;
-      }
-      nd.workspaceID = nd.ovbk_windowWorkspaceId;
-      nd.workspaceName = nd.ovbk_windowWorkspaceName;
-      nd.pWindow->m_position = nd.ovbk_position;
-      nd.pWindow->m_size = nd.ovbk_size;
-      g_pHyprRenderer->damageWindow(nd.pWindow);
+    if (!nd.pWindow || !nd.pWindow->m_workspace)
+      continue;
+    if (nd.pWindow->m_workspace->m_id == nd.ovbk_windowWorkspaceId &&
+        nd.workspaceName == nd.ovbk_windowWorkspaceName)
+      continue;
+
+    pWorkspace = g_pCompositor->getWorkspaceByID(nd.ovbk_windowWorkspaceId);
+    if (!pWorkspace) {
+      hycov_log(HYCOV_LOG, "source workspace {} no exist, recreating",
+                nd.ovbk_windowWorkspaceId);
+      auto pOrigMonitor =
+          g_pCompositor->getMonitorFromID(nd.ovbk_windowMonitorId);
+      MONITORID monitorId = pOrigMonitor
+                                ? nd.ovbk_windowMonitorId
+                                : Desktop::focusState()->monitor()->m_id;
+      g_hycov_pSpawnHook->hook();
+      pWorkspace = g_pCompositor->createNewWorkspace(
+          nd.ovbk_windowWorkspaceId, monitorId, nd.ovbk_windowWorkspaceName);
+      g_hycov_pSpawnHook->unhook();
+      if (pWorkspace)
+        recreatedWorkspaces.insert(nd.ovbk_windowWorkspaceId);
     }
+  }
+
+  // Second pass: move every window back to its source workspace.
+  for (auto &nd : m_lOvGridNodesData) {
+    if (!nd.pWindow || !nd.pWindow->m_workspace)
+      continue;
+    if (nd.pWindow->m_workspace->m_id == nd.ovbk_windowWorkspaceId &&
+        nd.workspaceName == nd.ovbk_windowWorkspaceName)
+      continue;
+
+    pWorkspace = g_pCompositor->getWorkspaceByID(nd.ovbk_windowWorkspaceId);
+    if (!pWorkspace) {
+      hycov_log(HYCOV_LOG, "workspace {} still missing, skipping window",
+                nd.ovbk_windowWorkspaceId);
+      continue;
+    }
+
+    // Windows were moved to the active workspace via direct assignment during
+    // enteroverview, so the layout system was never informed.  Using
+    // moveWindowToWorkspaceSafe here would try to remove the window from a
+    // layout space it was never properly added to (and for recreated
+    // workspaces the old space is dangling).  Always use direct assignment,
+    // matching how enteroverview moved them in.  recalculateAllMonitor()
+    // called later in dispatch_leaveoverview will rebuild all layouts.
+    nd.pWindow->m_workspace = pWorkspace;
+    auto pOrigMonitor =
+        g_pCompositor->getMonitorFromID(nd.ovbk_windowMonitorId);
+    if (pOrigMonitor && nd.pWindow->monitorID() != nd.ovbk_windowMonitorId)
+      nd.pWindow->m_monitor = pOrigMonitor;
+    nd.workspaceID = nd.ovbk_windowWorkspaceId;
+    nd.workspaceName = nd.ovbk_windowWorkspaceName;
+    nd.pWindow->m_position = nd.ovbk_position;
+    nd.pWindow->m_size = nd.ovbk_size;
+    g_pHyprRenderer->damageWindow(nd.pWindow);
   }
 }

@@ -221,8 +221,11 @@ void hkHyprMasterLayout_recalculate(void* thisptr) {
 }
 
 void hkLayoutManagerRecalculateMonitor(void* thisptr, PHLMONITOR monitor) {
-  // suppress layout recalculation during overview mode
-  if (g_hycov_isOverView) {
+  // suppress layout recalculation during overview mode and during exit
+  // (during exit, dwindle/master recalculate hooks are still no-ops,
+  // so letting LayoutManager run would produce a half-baked recalculation
+  // that may cause the real recalculateAllMonitor() to be skipped)
+  if (g_hycov_isOverView || g_hycov_isOverViewExiting) {
     return;
   }
   (*(origLayoutManagerRecalculateMonitor)g_hycov_pLayoutManager_recalculateMonitorHook->m_original)(thisptr, monitor);
